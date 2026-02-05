@@ -1,0 +1,7 @@
+{
+  "name": "Agendify SaaS",
+  "description": "Uma plataforma SaaS multi-tenant completa para agendamentos em diversos nichos como Salões, Clínicas, Petshops e Personal Trainers.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
