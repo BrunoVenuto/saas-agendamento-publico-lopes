@@ -57,39 +57,59 @@ const Professionals: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const profData = {
-            name: currentProf.name,
-            whatsapp: currentProf.whatsapp,
-            bio: currentProf.bio,
-            is_active: currentProf.is_active,
-            tenant_id: profile!.tenant_id
-        };
 
-        let profId = currentProf.id;
-        let error;
-
-        if (profId) {
-            const { error: err } = await supabase.from('professionals').update(profData).eq('id', profId);
-            error = err;
-        } else {
-            const { data, error: err } = await supabase.from('professionals').insert([profData]).select().single();
-            profId = data?.id;
-            error = err;
+        if (!profile?.tenant_id) {
+            toast.error('Erro: Estabelecimento não identificado.');
+            return;
         }
 
-        if (error) {
-            toast.error('Erro ao salvar profissional');
-        } else {
-            // Update services
-            await supabase.from('professional_services').delete().eq('professional_id', profId);
-            if (currentProf.services?.length) {
-                const psData = currentProf.services.map(sId => ({ professional_id: profId, service_id: sId }));
-                await supabase.from('professional_services').insert(psData);
+        try {
+            const profData = {
+                name: currentProf.name,
+                whatsapp: currentProf.whatsapp,
+                bio: currentProf.bio,
+                is_active: currentProf.is_active,
+                tenant_id: profile.tenant_id
+            };
+
+            let profId = currentProf.id;
+            let error;
+
+            if (profId) {
+                const { error: err } = await supabase.from('professionals').update(profData).eq('id', profId);
+                error = err;
+            } else {
+                const { data, error: err } = await supabase.from('professionals').insert([profData]).select().single();
+                profId = data?.id;
+                error = err;
             }
 
-            toast.success('Profissional salvo!');
-            setIsModalOpen(false);
-            fetchProfessionals();
+            if (error) {
+                console.error('Supabase error:', error);
+                toast.error('Erro ao salvar profissional: ' + error.message);
+            } else {
+                // Update services
+                const { error: delError } = await supabase.from('professional_services').delete().eq('professional_id', profId);
+                if (delError) console.error('Error deleting links:', delError);
+
+                if (currentProf.services?.length) {
+                    const psData = currentProf.services.map(sId => ({ professional_id: profId!, service_id: sId }));
+                    const { error: insError } = await supabase.from('professional_services').insert(psData);
+                    if (insError) {
+                        toast.error('Profissional salvo, mas falha ao vincular serviços.');
+                        console.error('Error inserting links:', insError);
+                    }
+                }
+
+                if (!error) {
+                    toast.success('Profissional salvo!');
+                    setIsModalOpen(false);
+                    fetchProfessionals();
+                }
+            }
+        } catch (err: any) {
+            console.error('Submit error:', err);
+            toast.error('Ocorreu um erro inesperado ao salvar.');
         }
     };
 

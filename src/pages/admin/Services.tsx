@@ -38,27 +38,39 @@ const Services: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const serviceData = {
-            ...currentService,
-            tenant_id: profile!.tenant_id
-        };
 
-        let error;
-        if (currentService.id) {
-            const { error: err } = await supabase.from('services').update(serviceData).eq('id', currentService.id);
-            error = err;
-        } else {
-            const { error: err } = await supabase.from('services').insert([serviceData]);
-            error = err;
+        if (!profile?.tenant_id) {
+            toast.error('Erro: Estabelecimento não identificado. Tente fazer login novamente.');
+            return;
         }
 
-        if (error) {
-            toast.error('Erro ao salvar serviço');
-        } else {
-            toast.success('Serviço salvo com sucesso!');
-            setIsModalOpen(false);
-            fetchServices();
-            setCurrentService({ name: '', description: '', duration: 30, price: 0, is_active: true });
+        try {
+            const serviceData = {
+                ...currentService,
+                tenant_id: profile.tenant_id
+            };
+
+            let error;
+            if (currentService.id) {
+                const { error: err } = await supabase.from('services').update(serviceData).eq('id', currentService.id);
+                error = err;
+            } else {
+                const { error: err } = await supabase.from('services').insert([serviceData]);
+                error = err;
+            }
+
+            if (error) {
+                console.error('Supabase error:', error);
+                toast.error('Erro ao salvar serviço: ' + error.message);
+            } else {
+                toast.success('Serviço salvo com sucesso!');
+                setIsModalOpen(false);
+                fetchServices();
+                setCurrentService({ name: '', description: '', duration: 30, price: 0, is_active: true });
+            }
+        } catch (err: any) {
+            console.error('Submit error:', err);
+            toast.error('Ocorreu um erro inesperado ao salvar.');
         }
     };
 

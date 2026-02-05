@@ -20,10 +20,21 @@ import LandingPage from './pages/public/LandingPage';
 import Pricing from './pages/public/Pricing';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user, loading } = useAuth();
+    const { user, profile, loading } = useAuth();
 
     if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
     if (!user) return <Navigate to="/login" />;
+
+    // Most admin routes require a tenant_id from the profile
+    if (!profile?.tenant_id) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen p-4 text-center">
+                <h1 className="text-xl font-bold text-red-600 mb-2">Perfil Incompleto</h1>
+                <p className="text-gray-600 mb-4">Seu perfil não está vinculado a um estabelecimento. Por favor, entre em contato com o suporte ou tente se cadastrar novamente.</p>
+                <Navigate to="/login" />
+            </div>
+        );
+    }
 
     return <>{children}</>;
 };

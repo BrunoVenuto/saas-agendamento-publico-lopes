@@ -36,22 +36,35 @@ const BookingFlow: React.FC = () => {
 
     const fetchTenantInfo = async () => {
         setLoading(true);
-        const { data: tenantData } = await supabase.from('tenants').select('*').eq('slug', slug).single();
-        if (tenantData) {
-            setTenant(tenantData);
-            const { data: servicesData } = await supabase.from('services').select('*').eq('tenant_id', tenantData.id).eq('is_active', true);
-            setServices(servicesData || []);
+        try {
+            const { data: tenantData } = await supabase.from('tenants').select('*').eq('slug', slug).single();
+            if (tenantData) {
+                setTenant(tenantData);
+                const { data: servicesData } = await supabase.from('services').select('*').eq('tenant_id', tenantData.id).eq('is_active', true);
+                setServices(servicesData || []);
+            }
+        } catch (error) {
+            console.error('Error fetching tenant:', error);
+            toast.error('Erro ao carregar informações');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const loadProfessionals = async (serviceId: string) => {
-        const { data } = await supabase
-            .from('professionals')
-            .select('*, professional_services!inner(service_id)')
-            .eq('professional_services.service_id', serviceId)
-            .eq('is_active', true);
-        setProfessionals(data || []);
+        setLoading(true);
+        try {
+            const { data } = await supabase
+                .from('professionals')
+                .select('*, professional_services!inner(service_id)')
+                .eq('professional_services.service_id', serviceId)
+                .eq('is_active', true);
+            setProfessionals(data || []);
+        } catch (error) {
+            toast.error('Erro ao carregar profissionais');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const loadSlots = async () => {
@@ -137,21 +150,37 @@ const BookingFlow: React.FC = () => {
                             {getNicheIcon()} Escolha o serviço
                         </h2>
                         <div className="space-y-3">
-                            {services.map(s => (
-                                <button
-                                    key={s.id}
-                                    onClick={() => { setSelectedService(s); loadProfessionals(s.id); setStep(2); }}
-                                    className="w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-left hover:border-primary transition-all flex justify-between items-center"
-                                >
-                                    <div>
-                                        <h3 className="font-bold text-gray-900">{s.name}</h3>
-                                        <p className="text-sm text-gray-500">{s.duration} min • {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(s.price)}</p>
+                            {loading ? (
+                                Array(3).fill(0).map((_, i) => (
+                                    <div key={i} className="w-full bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-pulse flex justify-between items-center">
+                                        <div className="space-y-2">
+                                            <div className="h-5 w-32 bg-gray-200 rounded" />
+                                            <div className="h-4 w-24 bg-gray-100 rounded" />
+                                        </div>
+                                        <div className="w-8 h-8 bg-gray-100 rounded-full" />
                                     </div>
-                                    <div className="bg-primary/5 p-2 rounded-full text-primary">
-                                        <ChevronLeft className="w-5 h-5 rotate-180" />
-                                    </div>
-                                </button>
-                            ))}
+                                ))
+                            ) : services.length === 0 ? (
+                                <div className="text-center py-10 text-gray-500 bg-white rounded-2xl border border-dashed border-gray-200">
+                                    Nenhum serviço disponível no momento.
+                                </div>
+                            ) : (
+                                services.map(s => (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => { setSelectedService(s); loadProfessionals(s.id); setStep(2); }}
+                                        className="w-full bg-white p-4 rounded-2xl border border-gray-100 shadow-sm text-left hover:border-primary transition-all flex justify-between items-center group"
+                                    >
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 group-hover:text-primary transition-colors">{s.name}</h3>
+                                            <p className="text-sm text-gray-500">{s.duration} min • {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(s.price)}</p>
+                                        </div>
+                                        <div className="bg-primary/5 p-2 rounded-full text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                            <ChevronLeft className="w-5 h-5 rotate-180" />
+                                        </div>
+                                    </button>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}
@@ -163,18 +192,31 @@ const BookingFlow: React.FC = () => {
                             <User className="w-5 h-5 text-primary" /> Quem vai te atender?
                         </h2>
                         <div className="grid grid-cols-2 gap-4">
-                            {professionals.map(p => (
-                                <button
-                                    key={p.id}
-                                    onClick={() => { setSelectedProf(p); setStep(3); }}
-                                    className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:border-primary transition-all flex flex-col items-center text-center space-y-3"
-                                >
-                                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xl uppercase">
-                                        {p.name.substring(0, 1)}
+                            {loading ? (
+                                Array(2).fill(0).map((_, i) => (
+                                    <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-pulse flex flex-col items-center space-y-3">
+                                        <div className="w-16 h-16 bg-gray-100 rounded-full" />
+                                        <div className="h-4 w-20 bg-gray-100 rounded" />
                                     </div>
-                                    <h3 className="font-bold text-gray-900">{p.name}</h3>
-                                </button>
-                            ))}
+                                ))
+                            ) : professionals.length === 0 ? (
+                                <div className="col-span-full text-center py-10 text-gray-500 bg-white rounded-2xl border border-dashed border-gray-200">
+                                    Não encontramos profissionais para este serviço no momento.
+                                </div>
+                            ) : (
+                                professionals.map(p => (
+                                    <button
+                                        key={p.id}
+                                        onClick={() => { setSelectedProf(p); setStep(3); }}
+                                        className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:border-primary transition-all flex flex-col items-center text-center space-y-3 group"
+                                    >
+                                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xl uppercase group-hover:scale-110 transition-transform">
+                                            {p.name.substring(0, 1)}
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 group-hover:text-primary transition-colors">{p.name}</h3>
+                                    </button>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}
@@ -206,15 +248,23 @@ const BookingFlow: React.FC = () => {
 
                         <div className="grid grid-cols-3 gap-3">
                             {loading ? (
-                                <div className="col-span-full py-10 text-center text-gray-400">Buscando horários...</div>
+                                Array(6).fill(0).map((_, i) => (
+                                    <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+                                ))
                             ) : slots.length === 0 ? (
-                                <div className="col-span-full py-10 text-center text-gray-500">Nenhum horário disponível para esta data.</div>
+                                <div className="col-span-full py-10 text-center text-gray-500 bg-white rounded-2xl border border-dashed border-gray-200">
+                                    Nenhum horário disponível para esta data.
+                                </div>
                             ) : slots.map((slot, i) => (
                                 <button
                                     key={i}
                                     disabled={!slot.available}
-                                    onClick={() => setSelectedSlot(slot)}
-                                    className={`py-3 rounded-xl border text-sm font-bold transition-all ${!slot.available ? 'bg-gray-50 text-gray-300 border-gray-100' : selectedSlot?.start === slot.start ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-100 hover:border-primary'}`}
+                                    onClick={() => {
+                                        setSelectedSlot(slot);
+                                        // Auto-scroll or delay slightly for better UX before moving to next step
+                                        setTimeout(() => setStep(4), 300);
+                                    }}
+                                    className={`py-3 rounded-xl border text-sm font-bold transition-all ${!slot.available ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' : selectedSlot?.start === slot.start ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-gray-700 border-gray-100 hover:border-primary active:scale-95'}`}
                                 >
                                     {format(slot.start, 'HH:mm')}
                                 </button>
@@ -248,11 +298,17 @@ const BookingFlow: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Seu WhatsApp</label>
                                 <input
                                     required
+                                    type="tel"
                                     className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                                    placeholder="55XXXXXXXXXXX"
+                                    placeholder="55 (...) 99999-9999"
                                     value={clientInfo.whatsapp}
-                                    onChange={e => setClientInfo({ ...clientInfo, whatsapp: e.target.value })}
+                                    onChange={e => {
+                                        // Simple numeric filter for WhatsApp
+                                        const val = e.target.value.replace(/\D/g, '');
+                                        setClientInfo({ ...clientInfo, whatsapp: val });
+                                    }}
                                 />
+                                <p className="text-[10px] text-gray-400 mt-1">Apenas números, incluindo o DDD (ex: 31999999999)</p>
                             </div>
 
                             <div className="pt-4 border-t border-gray-50 space-y-2">
@@ -271,11 +327,16 @@ const BookingFlow: React.FC = () => {
                             </div>
 
                             <button
-                                disabled={!clientInfo.name || !clientInfo.whatsapp || loading}
+                                disabled={!clientInfo.name || clientInfo.whatsapp.length < 10 || loading}
                                 onClick={handleFinish}
-                                className="w-full bg-primary text-white py-4 rounded-2xl font-bold shadow-xl shadow-primary/20 disabled:opacity-50"
+                                className="w-full bg-primary text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 disabled:opacity-50 disabled:grayscale transition-all active:scale-95 flex items-center justify-center gap-2"
                             >
-                                {loading ? 'Confirmando...' : 'Confirmar Agendamento'}
+                                {loading ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        Confirmando...
+                                    </>
+                                ) : 'Confirmar Agendamento'}
                             </button>
                         </div>
                     </div>
@@ -283,15 +344,46 @@ const BookingFlow: React.FC = () => {
 
                 {/* STEP 5: SUCCESS */}
                 {step === 5 && (
-                    <div className="flex flex-col items-center justify-center space-y-6 py-10 animate-in zoom-in duration-500">
-                        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                            <CheckCircle className="w-16 h-16" />
+                    <div className="flex flex-col items-center justify-center space-y-8 py-12 animate-in zoom-in duration-500 text-center">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-green-400 blur-2xl opacity-20 animate-pulse" />
+                            <div className="relative w-24 h-24 bg-green-500 text-white rounded-full flex items-center justify-center shadow-2xl shadow-green-200">
+                                <CheckCircle className="w-16 h-16" />
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <h2 className="text-2xl font-bold text-gray-900">Agendamento Realizado!</h2>
-                            <p className="text-gray-500 mt-2">Enviamos os detalhes para o seu WhatsApp.</p>
+                        <div className="space-y-2">
+                            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Tudo pronto!</h2>
+                            <p className="text-gray-500 max-w-[280px] mx-auto">Seu agendamento foi confirmado. Enviamos os detalhes para o seu WhatsApp.</p>
                         </div>
-                        <button onClick={() => setStep(1)} className="text-primary font-bold hover:underline">Fazer outro agendamento</button>
+
+                        <div className="w-full bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                            <div className="flex flex-col items-center gap-1">
+                                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Resumo do Agendamento</span>
+                                <span className="text-xl font-black text-primary">{selectedService?.name}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                                <div className="text-left">
+                                    <span className="block text-[10px] text-gray-400 font-bold uppercase">Data</span>
+                                    <span className="font-bold text-gray-900">{format(selectedSlot!.start, "dd 'de' MMM", { locale: ptBR })}</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="block text-[10px] text-gray-400 font-bold uppercase">Horário</span>
+                                    <span className="font-bold text-gray-900">{format(selectedSlot!.start, "HH:mm")}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                setStep(1);
+                                setSelectedService(null);
+                                setSelectedProf(null);
+                                setSelectedSlot(null);
+                            }}
+                            className="w-full py-4 rounded-2xl font-bold text-gray-400 hover:text-primary transition-colors border border-dashed border-gray-200 hover:border-primary hover:bg-primary/5"
+                        >
+                            Fazer outro agendamento
+                        </button>
                     </div>
                 )}
             </main>

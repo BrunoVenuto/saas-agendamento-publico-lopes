@@ -43,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const fetchProfile = async (userId: string) => {
+        setLoading(true);
         try {
             const { data, error } = await supabase
                 .from('profiles')
@@ -50,10 +51,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .eq('id', userId)
                 .single();
 
-            if (error) throw error;
-            setProfile(data);
+            if (error) {
+                if (error.code === 'PGRST116') {
+                    console.warn('Profile not found for user:', userId);
+                    setProfile(null);
+                } else {
+                    throw error;
+                }
+            } else {
+                setProfile(data);
+            }
         } catch (error) {
             console.error('Error fetching profile:', error);
+            setProfile(null);
         } finally {
             setLoading(false);
         }

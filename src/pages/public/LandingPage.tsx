@@ -202,17 +202,17 @@ const LandingPage: React.FC = () => {
 
             {/* Hero */}
             <main className="pt-32 pb-20 px-6">
-                <div className="max-w-5xl mx-auto text-center space-y-10">
-                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none">
-                        {config.heroTitle}
+                <div className="max-w-5xl mx-auto text-center space-y-10 px-4">
+                    <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-none break-words">
+                        {config?.heroTitle || 'Bem-vindo'}
                     </h1>
-                    <p className={`text-xl ${config.subtext} max-w-2xl mx-auto`}>
-                        {config.heroSub}
+                    <p className={`text-lg md:text-xl ${config?.subtext || 'text-gray-500'} max-w-2xl mx-auto`}>
+                        {config?.heroSub || 'Agende seu horário com facilidade.'}
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                         <Link
                             to={`/agendar/${safeSlug}`}
-                            className="w-full sm:w-auto px-12 py-6 bg-primary text-white rounded-2xl font-black text-2xl shadow-xl hover:scale-105 transition-all flex items-center gap-3"
+                            className="w-full sm:w-auto px-12 py-6 bg-primary text-white rounded-2xl font-black text-2xl shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-3"
                         >
                             Agendar Agora <Lucide.ArrowRight className="w-6 h-6" />
                         </Link>
