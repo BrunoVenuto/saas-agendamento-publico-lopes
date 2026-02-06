@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { whatsappService } from '../../services/whatsappService';
 import { Booking } from '../../types';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -38,9 +39,31 @@ const Bookings: React.FC = () => {
             .update({ status })
             .eq('id', id);
 
-        if (error) toast.error('Erro ao atualizar status');
-        else {
+        if (error) {
+            toast.error('Erro ao atualizar status');
+        } else {
             toast.success('Status atualizado');
+
+            // If cancelled, trigger WhatsApp message
+            if (status === 'CANCELLED') {
+                const booking = bookings.find(b => b.id === id);
+                if (booking) {
+                    const { data: tenant } = await supabase
+                        .from('tenants')
+                        .select('*')
+                        .eq('id', profile!.tenant_id)
+                        .single();
+
+                    if (tenant) {
+                        whatsappService.sendCancellation(
+                            booking,
+                            booking.services,
+                            tenant
+                        );
+                    }
+                }
+            }
+
             fetchBookings();
         }
     };

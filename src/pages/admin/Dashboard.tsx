@@ -29,7 +29,9 @@ const Dashboard: React.FC = () => {
         ]);
 
         const bookings = bookingsRes.data || [];
-        const revenue = bookings.reduce((acc, curr: any) => acc + (Number(curr.services?.price) || 0), 0);
+        const revenue = bookings
+            .filter((b: any) => b.status !== 'CANCELLED')
+            .reduce((acc, curr: any) => acc + (Number(curr.services?.price) || 0), 0);
 
         setStats({
             totalBookings: bookings.length,

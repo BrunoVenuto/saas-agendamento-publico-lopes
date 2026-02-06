@@ -18,6 +18,8 @@ export const whatsappService = {
         const message = `Olá ${booking.client_name}, infelizmente seu agendamento para *${service.name}* na *${tenant.name}* precisou ser cancelado. Por favor, entre em contato para reagendar.`;
 
         const encodedMessage = encodeURIComponent(message);
-        return `https://wa.me/${booking.client_whatsapp}?text=${encodedMessage}`;
+        const whatsappUrl = `https://wa.me/${booking.client_whatsapp}?text=${encodedMessage}`;
+
+        window.open(whatsappUrl, '_blank');
     }
 };
