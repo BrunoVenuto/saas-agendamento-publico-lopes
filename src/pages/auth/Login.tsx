@@ -21,8 +21,20 @@ const Login: React.FC = () => {
         if (error) {
             toast.error('Erro ao fazer login: ' + error.message);
         } else {
+            // Fetch profile to check role for redirection
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', (await supabase.auth.getUser()).data.user?.id)
+                .single();
+
             toast.success('Login realizado com sucesso!');
-            navigate('/admin');
+
+            if (profile?.role === 'SUPER_ADMIN') {
+                navigate('/saas-admin');
+            } else {
+                navigate('/admin');
+            }
         }
         setLoading(false);
     };

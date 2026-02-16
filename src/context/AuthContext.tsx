@@ -8,6 +8,7 @@ interface AuthContextType {
     profile: Profile | null;
     loading: boolean;
     signOut: () => Promise<void>;
+    isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,8 +74,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await supabase.auth.signOut();
     };
 
+    const isSuperAdmin = profile?.role === 'SUPER_ADMIN';
+
     return (
-        <AuthContext.Provider value={{ user, profile, loading, signOut }}>
+        <AuthContext.Provider value={{ user, profile, loading, signOut, isSuperAdmin }}>
             {children}
         </AuthContext.Provider>
     );

@@ -19,22 +19,35 @@ import BookingFlow from './pages/public/BookingFlow';
 import LandingPage from './pages/public/LandingPage';
 import Pricing from './pages/public/Pricing';
 
+// SaaS Admin Pages
+import SaasAdminLayout from './components/SaasAdminLayout';
+import SaasDashboard from './pages/admin/saas/Dashboard';
+import SaasTenants from './pages/admin/saas/Tenants';
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { user, profile, loading } = useAuth();
+    const { user, profile, loading, isSuperAdmin } = useAuth();
 
     if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+
+    // If not logged in, go to login
     if (!user) return <Navigate to="/login" />;
 
-    // Most admin routes require a tenant_id from the profile
+    // If super admin, they can access /admin routes (though they usually use /saas-admin)
+    if (isSuperAdmin) return <>{children}</>;
+
+    // Most admin routes require a tenant_id from the profile for normal users
     if (!profile?.tenant_id) {
-        return (
-            <div className="flex flex-col items-center justify-center h-screen p-4 text-center">
-                <h1 className="text-xl font-bold text-red-600 mb-2">Perfil Incompleto</h1>
-                <p className="text-gray-600 mb-4">Seu perfil não está vinculado a um estabelecimento. Por favor, entre em contato com o suporte ou tente se cadastrar novamente.</p>
-                <Navigate to="/login" />
-            </div>
-        );
+        return <Navigate to="/login" />;
     }
+
+    return <>{children}</>;
+};
+
+const SuperAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user, isSuperAdmin, loading } = useAuth();
+
+    if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    if (!user || !isSuperAdmin) return <Navigate to="/login" />;
 
     return <>{children}</>;
 };
@@ -60,6 +73,17 @@ const App: React.FC = () => {
                         <Route path="servicos" element={<Services />} />
                         <Route path="profissionais" element={<Professionals />} />
                         <Route path="agendamentos" element={<AdminBookings />} />
+                    </Route>
+
+                    {/* SaaS Admin Routes */}
+                    <Route path="/saas-admin" element={
+                        <SuperAdminRoute>
+                            <SaasAdminLayout />
+                        </SuperAdminRoute>
+                    }>
+                        <Route index element={<SaasDashboard />} />
+                        <Route path="tenants" element={<SaasTenants />} />
+                        <Route path="users" element={<div className="p-8 text-center text-gray-500">Gestão de usuários em breve...</div>} />
                     </Route>
 
                     {/* Root redirect */}

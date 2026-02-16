@@ -6,6 +6,7 @@ export enum Niche {
 }
 
 export enum Role {
+    SUPER_ADMIN = 'SUPER_ADMIN',
     TENANT_ADMIN = 'TENANT_ADMIN',
     STAFF = 'STAFF'
 }
