@@ -13,7 +13,7 @@ const Login: React.FC = () => {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -21,19 +21,33 @@ const Login: React.FC = () => {
         if (error) {
             toast.error('Erro ao fazer login: ' + error.message);
         } else {
-            // Fetch profile to check role for redirection
-            const { data: profile } = await supabase
+            console.log('Login success, user ID:', data.user?.id);
+
+            // Wait a bit for auth state to propagate or fetch manually
+            const { data: profile, error: profileError } = await supabase
                 .from('profiles')
-                .select('role')
-                .eq('id', (await supabase.auth.getUser()).data.user?.id)
+                .select('role, tenant_id')
+                .eq('id', data.user?.id)
                 .single();
 
-            toast.success('Login realizado com sucesso!');
-
-            if (profile?.role === 'SUPER_ADMIN') {
-                navigate('/saas-admin');
+            if (profileError) {
+                console.error('Error fetching profile on login:', profileError);
+                toast.error('Erro ao carregar perfil. Verifique as configurações no banco.');
+                navigate('/login');
             } else {
-                navigate('/admin');
+                console.log('Profile loaded:', profile);
+                toast.success('Login realizado com sucesso!');
+
+                if (profile?.role === 'SUPER_ADMIN') {
+                    console.log('Redirecting to /saas-admin');
+                    navigate('/saas-admin');
+                } else if (profile?.tenant_id) {
+                    console.log('Redirecting to /admin');
+                    navigate('/admin');
+                } else {
+                    console.warn('User has no role/tenant, staying at login');
+                    toast.error('Perfil incompleto. Entre em contato com o suporte.');
+                }
             }
         }
         setLoading(false);

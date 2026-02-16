@@ -52,12 +52,27 @@ const SuperAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return <>{children}</>;
 };
 
+const Home: React.FC = () => {
+    const { user, profile, loading, isSuperAdmin } = useAuth();
+
+    if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+
+    if (!user) return <Navigate to="/login" />;
+
+    if (isSuperAdmin) return <Navigate to="/saas-admin" />;
+
+    if (profile?.tenant_id) return <Navigate to="/admin" />;
+
+    return <Navigate to="/login" />;
+};
+
 const App: React.FC = () => {
     return (
         <Router>
             <AuthProvider>
                 <Routes>
                     {/* Public Routes */}
+                    <Route path="/" element={<Home />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/agendar/:slug" element={<BookingFlow />} />
