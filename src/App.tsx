@@ -106,7 +106,7 @@ const App: React.FC = () => {
                     {/* Root redirect */}
                     <Route path="/" element={<Navigate to="/login" />} />
                 </Routes>
-                <Toaster position="top-right" />
+                <Toaster position="top-right" richColors expand={true} />
             </AuthProvider>
         </Router>
     );

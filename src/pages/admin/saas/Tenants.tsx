@@ -13,6 +13,7 @@ import {
     CheckCircle2,
     XCircle
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -73,9 +74,10 @@ const SaasTenants: React.FC = () => {
             setTenants(tenants.map(t =>
                 t.id === tenantId ? { ...t, is_active: !currentStatus } : t
             ));
-        } catch (error) {
+            toast.success(`Estabelecimento ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`);
+        } catch (error: any) {
             console.error('Error updating tenant status:', error);
-            alert('Erro ao atualizar status do estabelecimento');
+            toast.error(`Erro ao atualizar status: ${error.message || 'Erro desconhecido'}`);
         }
     };
 
@@ -195,8 +197,8 @@ const SaasTenants: React.FC = () => {
                                     <button
                                         onClick={() => toggleTenantStatus(tenant.id, tenant.is_active)}
                                         className={`flex items-center gap-1 text-xs font-bold transition-colors ${tenant.is_active
-                                                ? 'text-red-500 hover:text-red-700'
-                                                : 'text-green-600 hover:text-green-800'
+                                            ? 'text-red-500 hover:text-red-700'
+                                            : 'text-green-600 hover:text-green-800'
                                             }`}
                                     >
                                         {tenant.is_active ? (
