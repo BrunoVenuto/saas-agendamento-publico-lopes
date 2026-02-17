@@ -22,26 +22,21 @@ const SaasDashboard: React.FC = () => {
                 { count: tenantsCount },
                 { count: bookingsCount },
                 { count: usersCount },
-                { data: bookingsData }
+                { data: subsData }
             ] = await Promise.all([
                 supabase.from('tenants').select('*', { count: 'exact', head: true }),
                 supabase.from('bookings').select('*', { count: 'exact', head: true }),
                 supabase.from('profiles').select('*', { count: 'exact', head: true }),
-                supabase.from('bookings').select('service_id, services(price)').eq('status', 'CONFIRMED')
+                supabase.from('subscriptions').select('amount').eq('status', 'ACTIVE')
             ]);
 
-            const revenue = bookingsData?.reduce((acc, booking: any) => {
-                const price = Array.isArray(booking.services)
-                    ? booking.services[0]?.price
-                    : booking.services?.price;
-                return acc + (Number(price) || 0);
-            }, 0) || 0;
+            const mrr = subsData?.reduce((acc, sub: any) => acc + (Number(sub.amount) || 0), 0) || 0;
 
             setStats({
                 totalTenants: tenantsCount || 0,
                 totalBookings: bookingsCount || 0,
                 totalUsers: usersCount || 0,
-                predictedRevenue: revenue
+                predictedRevenue: mrr
             });
         } catch (error) {
             console.error('Error fetching dashboard stats:', error);
@@ -56,7 +51,7 @@ const SaasDashboard: React.FC = () => {
         { name: 'Estabelecimentos', value: stats.totalTenants, icon: Building2, color: 'bg-blue-500' },
         { name: 'Total de Agendamentos', value: stats.totalBookings, icon: Calendar, color: 'bg-indigo-500' },
         { name: 'Usuários na Plataforma', value: stats.totalUsers, icon: Users, color: 'bg-emerald-500' },
-        { name: 'Receita Prevista (Total)', value: `R$ ${stats.predictedRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'bg-amber-500' },
+        { name: 'Faturamento Recorrente (MRR)', value: `R$ ${stats.predictedRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'bg-amber-500' },
     ];
 
     return (

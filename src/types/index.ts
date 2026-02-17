@@ -18,6 +18,16 @@ export enum AppointmentStatus {
     COMPLETED = 'COMPLETED'
 }
 
+export interface Subscription {
+    id: string;
+    tenant_id: string;
+    amount: number;
+    status: 'ACTIVE' | 'OVERDUE' | 'CANCELLED';
+    last_payment?: string;
+    next_payment?: string;
+    created_at: string;
+}
+
 export interface Tenant {
     id: string;
     name: string;
@@ -25,6 +35,9 @@ export interface Tenant {
     primary_color: string;
     logo_url?: string;
     niche: Niche;
+    is_active: boolean;
+    created_at: string;
+    subscription?: Subscription;
 }
 
 export interface Profile {

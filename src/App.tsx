@@ -23,6 +23,7 @@ import Pricing from './pages/public/Pricing';
 import SaasAdminLayout from './components/SaasAdminLayout';
 import SaasDashboard from './pages/admin/saas/Dashboard';
 import SaasTenants from './pages/admin/saas/Tenants';
+import SaasFinancial from './pages/admin/saas/Financial';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, profile, loading, isSuperAdmin } = useAuth();
@@ -98,6 +99,7 @@ const App: React.FC = () => {
                     }>
                         <Route index element={<SaasDashboard />} />
                         <Route path="tenants" element={<SaasTenants />} />
+                        <Route path="financial" element={<SaasFinancial />} />
                         <Route path="users" element={<div className="p-8 text-center text-gray-500">Gestão de usuários em breve...</div>} />
                     </Route>
 

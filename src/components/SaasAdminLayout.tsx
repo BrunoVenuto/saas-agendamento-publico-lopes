@@ -8,7 +8,8 @@ import {
     LogOut,
     Menu,
     X,
-    ShieldCheck
+    ShieldCheck,
+    DollarSign
 } from 'lucide-react';
 import { cn } from '../utils/ui';
 
@@ -21,6 +22,7 @@ const SaasAdminLayout: React.FC = () => {
     const navigation = [
         { name: 'Dashboard', href: '/saas-admin', icon: LayoutDashboard },
         { name: 'Estabelecimentos', href: '/saas-admin/tenants', icon: Building2 },
+        { name: 'Financeiro', href: '/saas-admin/financial', icon: DollarSign },
         { name: 'Usuários', href: '/saas-admin/users', icon: Users },
     ];
 
